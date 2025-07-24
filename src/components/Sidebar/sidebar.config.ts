@@ -22,6 +22,10 @@ const sidebarConfig: SidebarItemConfig[] = [
         path: '/organizations',
     },
     {
+        label: 'Domains',
+        path: '/domains',
+    },
+    {
         label: 'Rules',
         path: '/rules',
     },

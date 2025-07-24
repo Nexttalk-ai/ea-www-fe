@@ -22,3 +22,14 @@ export interface User {
     status: string;
     organization: Array<string>;
 }
+
+export interface Domain {
+    id: string;
+    name: string;
+    address: string;
+    status: 'active' | 'inactive';
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    version: number;
+}

@@ -42,7 +42,7 @@ export const DeleteConfirmationModal = ({
                     <div className="h-[34px] mb-[6px] flex justify-center">
                         <p className="text-black text-[14px] leading-[160%] font-normal text-center">{message}</p>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 mt-2">
                         <Button
                             onClick={onConfirm}
                             className="w-full h-[44px] rounded-[2px] bg-[#EA3A3D] text-white hover:bg-[#d43436]"
