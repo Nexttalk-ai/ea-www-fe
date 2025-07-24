@@ -1,0 +1,22 @@
+
+
+
+.ag-theme-quartz .cell-wrap-text {
+    white-space: normal !important;
+    line-height: 1.5 !important;
+    padding: 8px !important;
+}
+
+.ag-theme-quartz .ag-cell {
+    display: flex;
+    align-items: center;
+    overflow: visible !important;
+}
+
+.ag-theme-quartz .ag-row {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.ag-theme-quartz .ag-row-hover {
+    background-color: #f7fafc !important;
+} 
