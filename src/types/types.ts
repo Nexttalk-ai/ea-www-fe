@@ -33,3 +33,16 @@ export interface Domain {
     deleted_at: string | null;
     version: number;
 }
+
+export interface TSPID {
+    id: string;
+    tspid_value: string;
+    enabled: boolean;
+    generationMethod: 'manual' | 'auto' | 'partner_feed';
+    expiryDays: number;
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+    version: number;
+    content?: any;
+}

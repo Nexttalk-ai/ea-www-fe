@@ -360,7 +360,7 @@ const OrganizationDetails = () => {
                                     value: user.id,
                                     label: user.name
                                 })) || []}
-                                value={watchedUserIds}
+                                value={watchedUserIds || []}
                                 onChange={(value) => setValue('userIds', value)}
                                 multipleSelect={true}
                                 placeholder="Select users..."

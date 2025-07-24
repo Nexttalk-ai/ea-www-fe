@@ -26,6 +26,10 @@ const sidebarConfig: SidebarItemConfig[] = [
         path: '/domains',
     },
     {
+        label: 'TSPID Configs',
+        path: '/tspid',
+    },
+    {
         label: 'Rules',
         path: '/rules',
     },

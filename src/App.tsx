@@ -15,6 +15,10 @@ import RulePage from './pages/RulePage';
 import AddRule from './pages/AddRule';
 import EditRule from './pages/EditRule';
 import DomainsPage from './pages/DomainsPage';
+import TSPIDPage from './pages/TSPIDPage';
+import TSPIDConfigsPage from './pages/TSPIDConfigsPage';
+import AddTSPID from './pages/AddTSPID';
+import EditTSPID from './pages/EditTSPID';
 import OrganizationsPage from './pages/OrganizationsPage';
 import OrganizationDetails from './pages/OrganizationDetails';
 
@@ -38,6 +42,10 @@ const App: React.FC = () => {
       <Route path="/rules/edit/:id" element={<ProtectedRoute><EditRule /></ProtectedRoute>} />
       <Route path="/rules/:id" element={<ProtectedRoute><RulePage /></ProtectedRoute>} />
       <Route path="/domains" element={<ProtectedRoute><DomainsPage /></ProtectedRoute>} />
+                      <Route path="/tspid" element={<ProtectedRoute><TSPIDConfigsPage /></ProtectedRoute>} />
+                <Route path="/tspid/add-tspid" element={<ProtectedRoute><AddTSPID /></ProtectedRoute>} />
+                <Route path="/tspid/edit/:id" element={<ProtectedRoute><EditTSPID /></ProtectedRoute>} />
+                <Route path="/tspid/:id" element={<ProtectedRoute><TSPIDPage /></ProtectedRoute>} />
       <Route path="/organizations" element={<ProtectedRoute><OrganizationsPage /></ProtectedRoute>} />
       <Route path="/organizations/:id" element={<ProtectedRoute><OrganizationDetails /></ProtectedRoute>} />
       <Route path="/test" element={<ProtectedRoute><Test /></ProtectedRoute>} />
