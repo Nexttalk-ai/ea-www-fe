@@ -39,19 +39,17 @@ const tableTheme: TableTheme = {
 
 const themeClass: string = tableTheme.isDarkMode ? `${tableTheme.gridTheme}-dark` : tableTheme.gridTheme;
 
-const AVAILABLE_ROLES = ['user', 'Admin'];
+
 
 type UserData = {
     email: string;
     name: string;
-    role: string;
     organizations?: string[];
 };
 
 type UserValidationError = {
     name?: boolean;
     email?: boolean;
-    role?: boolean;
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,13 +65,11 @@ const UsersTable = () => {
     const [formData, setFormData] = useState<Partial<User>>({
         name: '',
         email: '',
-        role: '',
         organizations: []
     });
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-    const roleDropdownRef = useRef<HTMLDivElement>(null);
+
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const { show, NotificationContainer } = useNotification();
     const navigate = useNavigate();
@@ -181,18 +177,7 @@ const UsersTable = () => {
         fetchOrganizations();
     }, []);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
-                setShowRoleDropdown(false);
-            }
-        };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
 
     useEffect(() => {
         if (gridApi && rowData.length > 0) {
@@ -228,7 +213,6 @@ const UsersTable = () => {
         
         if (!formData.name?.trim()) newErrors.name = true;
         if (!formData.email?.trim() || !EMAIL_REGEX.test(formData.email)) newErrors.email = true;
-        if (!formData.role?.trim()) newErrors.role = true;
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -238,8 +222,7 @@ const UsersTable = () => {
 
     const doesUserMatch = (user: User, userData: UserData): boolean => {
         return user.email === userData.email && 
-               user.name === userData.name && 
-               user.role === userData.role;
+               user.name === userData.name;
     };
 
     const findMatchingUserInList = async (userData: UserData): Promise<User | undefined> => {
@@ -282,7 +265,7 @@ const UsersTable = () => {
         if (!data.name?.trim()) errors.push('Name is required');
         if (!data.email?.trim()) errors.push('Email is required');
         else if (!EMAIL_REGEX.test(data.email)) errors.push('Invalid email format');
-        if (!data.role?.trim()) errors.push('Role is required');
+
         if (data.organizations?.some(org => !org)) errors.push('Invalid organization selected');
         
         if (errors.length > 0) {
@@ -292,7 +275,6 @@ const UsersTable = () => {
         return {
             name: data.name!.trim(),
             email: data.email!.trim(),
-            role: data.role!.trim(),
             organizations: data.organizations || []
         };
     };
@@ -470,7 +452,7 @@ const UsersTable = () => {
                     showNotificationModal('', 'success', modalMode);
                     await fetchUsers();
                     setIsModalOpen(false);
-                    setFormData({ name: '', email: '', role: '', organizations: [] });
+                    setFormData({ name: '', email: '', organizations: [] });
                     setErrors({});
                 } catch (err) {
                     const errorMessage = err instanceof Error ? err.message : 'Failed to create user';
@@ -491,7 +473,7 @@ const UsersTable = () => {
                 showNotificationModal('', 'success', modalMode);
                 await fetchUsers();
                 setIsModalOpen(false);
-                setFormData({ name: '', email: '', role: '', organizations: [] });
+                setFormData({ name: '', email: '', organizations: [] });
                 setErrors({});
             }
         } catch (err) {
@@ -576,14 +558,7 @@ const UsersTable = () => {
                 return date.toLocaleString();
             }
         },
-        {
-            field: 'role',
-            headerName: 'Role',
-            sortable: false,
-            filter: false,
-            width: 80,
-            minWidth: 60
-        },
+
         {
             field: 'actions',
             headerName: '',
@@ -686,7 +661,6 @@ const UsersTable = () => {
                         setFormData({
                             name: '',
                             email: '',
-                            role: '',
                             organizations: []
                         });
                         setIsModalOpen(true);
@@ -783,33 +757,6 @@ const UsersTable = () => {
                         {errors.email && modalMode === 'add' && (
                             <p className="text-red-500 text-sm mt-1">User with this email already exists</p>
                         )}
-                        <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-black">Role</label>
-                            <div className="relative" ref={roleDropdownRef}>
-                                <div 
-                                    className={`flex items-center p-2 border rounded-md bg-white min-h-[42px] cursor-pointer ${errors.role ? 'border-red-500' : ''}`}
-                                    onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                                >
-                                    <span className="text-black ml-2">{formData.role || 'Select role'}</span>
-                                </div>
-                                {showRoleDropdown && (
-                                    <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
-                                        {AVAILABLE_ROLES.map(role => (
-                                            <div
-                                                key={role}
-                                                className="px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-black"
-                                                onClick={() => {
-                                                    handleInputChange('role', role);
-                                                    setShowRoleDropdown(false);
-                                                }}
-                                            >
-                                                {role}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium text-black">Organizations</label>
                             <OrganizationsInput

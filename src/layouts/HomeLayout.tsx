@@ -44,7 +44,7 @@ const HomeLayout: React.FC<HomeLayoutProps> = ({ children }) => {
       <header className="h-12 bg-[#001529] flex items-center justify-between px-4 text-white">
         {/* Left: Logo */}
         <div className="h-full flex items-center">
-          <Logo imageSrc="/images/NextTalkLogo.png" className="h-[32px] w-auto object-contain" />
+          <Logo imageSrc="/images/ExplorAdsAdminLogo.png" className="h-[32px] w-auto object-contain" />
         </div>
         {/* Right: Greeting, Clocks, Org Selector, Logout */}
         <div className="flex items-center gap-[12px] h-full">

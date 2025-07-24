@@ -4,7 +4,6 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: string;
     organizations: string[];
     created_at: string;
     updated_at: string;
@@ -15,7 +14,6 @@ export interface User {
 export interface CreateUserData {
     name: string;
     email: string;
-    role: string;
     organizations?: string[];
 }
 
@@ -23,7 +21,6 @@ export interface UpdateUserData {
     id: string;
     name?: string;
     email?: string;
-    role?: string;
     organizations?: string[];
 }
 

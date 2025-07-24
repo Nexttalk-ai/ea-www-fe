@@ -66,13 +66,13 @@ const LoginForm: React.FC = () => {
   return (
     <>
     <div className="absolute top-4 left-4">
-      <Logo imageSrc="/images/NextTalkLogo.png"
+      <Logo imageSrc="/images/ExplorAdsAdminLogo.png"
             size={80}
             className="flex shrink-0"
       />
     </div>
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 p-8">
-      <h2 className="text-4xl font-bold mb-4 text-center text-purple">Sign in to Next Talk</h2>
+      <h2 className="text-4xl font-bold mb-4 text-center text-purple">Sign in to ExplorAds</h2>
       
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">

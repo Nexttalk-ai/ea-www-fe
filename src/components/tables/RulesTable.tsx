@@ -70,7 +70,16 @@ const RulesTable = () => {
 
     const onGridReady = useCallback((params: GridReadyEvent) => {
         gridApiRef.current = params.api;
+        params.api.sizeColumnsToFit();
     }, []);
+
+    const onPaginationChanged = () => {
+        if (gridApiRef.current) {
+            const currentPage = gridApiRef.current.paginationGetCurrentPage() + 1;
+            const totalPages = gridApiRef.current.paginationGetTotalPages();
+            setCurrentPage(currentPage);
+        }
+    };
 
     const autoSizeStrategy = useMemo<SizeColumnsToFitGridStrategy>(
         () => ({
@@ -84,6 +93,7 @@ const RulesTable = () => {
             setIsLoading(true);
             setError(null);
             const rules = await rulesService.list();
+            console.log('Fetched rules:', rules);
             setRowData(rules);
         } catch (err) {
             setError('Failed to fetch rules. Please try again.');
@@ -96,6 +106,13 @@ const RulesTable = () => {
     useEffect(() => {
         fetchRules();
     }, []);
+
+    useEffect(() => {
+        console.log('rowData changed:', rowData);
+        if (gridApiRef.current) {
+            gridApiRef.current.sizeColumnsToFit();
+        }
+    }, [rowData]);
 
 
 
@@ -207,41 +224,47 @@ const RulesTable = () => {
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="flex flex-col h-[calc(100vh-276px)]">
                 {isLoading ? (
                     <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                     </div>
+                ) : error ? (
+                    <div className="text-red-500">{error}</div>
                 ) : (
-                    <div>
-                        <div className={`${themeClass} w-full`} style={{ height: rowsPerPage * 48 + 2 }}>
-                            <AgGridReact
+                    <div className="flex-1 min-h-0 w-full ag-theme-quartz">
+                                                    <AgGridReact
                                 rowData={rowData}
                                 columnDefs={columnDefs}
                                 defaultColDef={defaultColDef}
                                 pagination={true}
                                 paginationPageSize={rowsPerPage}
                                 onGridReady={onGridReady}
+                                onPaginationChanged={onPaginationChanged}
                                 autoSizeStrategy={autoSizeStrategy}
                                 suppressPaginationPanel={true}
                                 suppressScrollOnNewData={true}
+                                animateRows={true}
+                                suppressCellFocus={false}
+                                enableCellTextSelection={true}
+                                suppressColumnVirtualisation={true}
+                                rowHeight={55}
+                                headerHeight={55}
                                 theme="legacy"
                             />
-                        </div>
-                        {totalPages > 0 && (
-                            <div className="mt-4 flex justify-end w-full">
-                                <CustomPagination
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    onPageChange={onPageChange}
-                                />
-                            </div>
-                        )}
                     </div>
                 )}
             </div>
 
-
+            {totalPages > 0 && (
+                <div className="flex items-center justify-end h-[32px] mt-4">
+                    <CustomPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={onPageChange}
+                    />
+                </div>
+            )}
         </div>
     );
 };

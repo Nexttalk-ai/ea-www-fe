@@ -13,7 +13,7 @@ import GoBackButton from '../components/ui/GoBackButton';
 
 type Tab = 'details' | 'permissions' | 'activity';
 
-const AVAILABLE_ROLES = ['user', 'Admin'];
+
 
 const UserDetails: React.FC = () => {
     const { id, org_id } = useParams<{ id: string; org_id: string }>();
@@ -27,11 +27,9 @@ const UserDetails: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedUser, setEditedUser] = useState<Partial<User>>({});
     const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-    const roleDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -47,9 +45,6 @@ const UserDetails: React.FC = () => {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
-                setShowRoleDropdown(false);
-            }
             if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
                 setShowStatusDropdown(false);
             }
@@ -154,7 +149,7 @@ const UserDetails: React.FC = () => {
                 version: user.version,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+
                 organizations: user.organizations
             };
 
@@ -197,7 +192,7 @@ const UserDetails: React.FC = () => {
                 id: id!,
                 name: editedUser.name || user.name,
                 email: editedUser.email || user.email,
-                role: editedUser.role || user.role,
+
                 organizations: editedUser.organizations || user.organizations,
                 deleted_at: editedUser.deleted_at,
                 version: user.version
@@ -211,8 +206,7 @@ const UserDetails: React.FC = () => {
                 
                 const verifiedUser = await userService.get(id!);
                 if (verifiedUser.email !== updateData.email || 
-                    verifiedUser.name !== updateData.name || 
-                    verifiedUser.role !== updateData.role) {
+                    verifiedUser.name !== updateData.name) {
                     throw new Error('Update verification failed');
                 }
                 
@@ -226,8 +220,7 @@ const UserDetails: React.FC = () => {
                     try {
                         const currentUser = await userService.get(id!);
                         if (currentUser.email === updateData.email && 
-                            currentUser.name === updateData.name && 
-                            currentUser.role === updateData.role) {
+                            currentUser.name === updateData.name) {
                             setUser(currentUser);
                             setEditedUser(currentUser);
                             setIsEditing(false);
@@ -321,7 +314,6 @@ const UserDetails: React.FC = () => {
                                 <h1 className="text-[24px] font-medium text-black">{user?.name}</h1>
                                 <div className="flex items-center gap-6 text-[14px] text-gray-500">
                                     <span>{user?.email}</span>
-                                    <span>{user?.role}</span>
                                 </div>
                             </div>
                             <div className="flex gap-6 mt-6">
@@ -468,49 +460,7 @@ const UserDetails: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <label className="block text-sm text-gray-500">Role</label>
-                                {isEditing ? (
-                                    <div className="relative max-w-md" ref={roleDropdownRef}>
-                                        <div 
-                                            role="combobox"
-                                            aria-labelledby="role-label"
-                                            aria-expanded={showRoleDropdown}
-                                            aria-haspopup="listbox"
-                                            className="flex items-center p-2 border rounded-md bg-white min-h-[42px] cursor-pointer"
-                                            onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                                        >
-                                            <span className="text-[#262626] text-[14px] leading-[22px] font-semibold">{editedUser.role}</span>
-                                        </div>
-                                        {showRoleDropdown && (
-                                            <div 
-                                                role="listbox"
-                                                aria-labelledby="role-label"
-                                                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
-                                            >
-                                                {AVAILABLE_ROLES.map(role => (
-                                                    <div
-                                                        key={role}
-                                                        role="option"
-                                                        aria-selected={editedUser.role === role}
-                                                        className="px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-[#262626] text-[14px] leading-[22px] font-semibold"
-                                                        onClick={() => {
-                                                            handleInputChange('role', role);
-                                                            setShowRoleDropdown(false);
-                                                        }}
-                                                    >
-                                                        {role}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="p-2 border rounded-md bg-[#F5F5F5] min-h-[42px]">
-                                        <span className="text-[#262626] text-[14px] leading-[22px] font-semibold">{user?.role}</span>
-                                    </div>
-                                )}
-                            </div>
+
 
                             <div className="flex flex-col gap-2">
                                 <label className="block text-sm text-gray-500">Organizations</label>

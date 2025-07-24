@@ -86,5 +86,58 @@
 .ag-theme-quartz .ag-paging-row-summary-panel {
     background-color: #f8f9fa;
     border-top: 1px solid #e9ecef;
-} 
+}
+
+/* Additional styles for better table appearance */
+.ag-theme-quartz .cell-wrap-text {
+    white-space: normal !important;
+    line-height: 1.5 !important;
+    padding: 8px !important;
+}
+
+.ag-theme-quartz .ag-cell {
+    display: flex;
+    align-items: center;
+    overflow: visible !important;
+}
+
+.ag-theme-quartz .ag-row {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.ag-theme-quartz .ag-row-hover {
+    background-color: #f7fafc !important;
+}
+
+/* Header separator styles */
+.ag-header-cell-with-separator::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 22px;
+    background-color: #f0f0f0;
+}
+
+/* Grid container styles */
+.ag-theme-quartz {
+    --ag-borders: none;
+    --ag-borders-secondary: none;
+    --ag-header-column-separator-display: none;
+    --ag-border-color: transparent;
+    --ag-row-height: 55px;
+    --ag-header-height: 55px;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.ag-theme-quartz .ag-root-wrapper {
+    border: none;
+}
+
+.ag-theme-quartz .ag-center-cols-container {
+    width: 100%;
+}
 

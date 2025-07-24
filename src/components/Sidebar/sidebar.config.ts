@@ -22,31 +22,6 @@ const sidebarConfig: SidebarItemConfig[] = [
         path: '/organizations',
     },
     {
-        label: 'Roles',
-        path: '/roles',
-    },
-    {
-        label: 'Campaign Uploader',
-        children: [
-            {
-                label: 'Keywords Bank',
-                path: '/keywords',
-            },
-            {
-                label: 'Creatives',
-                path: '/creatives',
-            },
-            {
-                label: 'Creative Maker',
-                path: '/creative-maker',
-            },
-            {
-                label: 'Activity Log',
-                path: '/activity-log',
-            }
-        ]
-    },
-    {
         label: 'Rules',
         path: '/rules',
     },
