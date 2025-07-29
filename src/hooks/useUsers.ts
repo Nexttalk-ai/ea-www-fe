@@ -2,7 +2,9 @@ import useSWR from 'swr';
 import { fetcher } from '../utils/helpers/fetcher';
 import { User } from '../services/userService';
 
-const API_BASE_URL = 'https://282x80mwdj.execute-api.us-west-2.amazonaws.com/dev/user';
+import { getApiUrl } from '../config/api';
+
+const API_BASE_URL = getApiUrl('/user');
 
 export const useUsers = () => {
   const { data, error, isLoading, mutate } = useSWR(

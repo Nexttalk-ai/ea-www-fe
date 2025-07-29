@@ -21,66 +21,20 @@ const TSPIDPage: React.FC = () => {
     const [jsonError, setJsonError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
-    const extractContentFromResponse = (response: any): any => {
-        // Try direct content field first
-        if (response?.content && typeof response.content === 'object' && Object.keys(response.content).length > 0) {
-            return response.content;
-        }
-        
-        // Try parsing body field and look for content inside it
-        if (response?.body) {
-            try {
-                const bodyData = typeof response.body === 'string' ? JSON.parse(response.body) : response.body;
-                
-                // Look for content field inside the body
-                if (bodyData?.content && typeof bodyData.content === 'object' && Object.keys(bodyData.content).length > 0) {
-                    return bodyData.content;
-                }
-                
-                // If body itself looks like content (has tspid structure), use it
-                if (bodyData && typeof bodyData === 'object' && (
-                    bodyData.tspid_value || bodyData.enabled !== undefined || bodyData.generationMethod
-                )) {
-                    return bodyData;
-                }
-            } catch (e) {
-                // Failed to parse body
-            }
-        }
-        
-        // Try nested content paths
-        const contentPaths = [
-            response?.data?.content,
-            response?.result?.content,
-            response?.content,
-        ];
-        
-        for (const contentPath of contentPaths) {
-            if (contentPath && typeof contentPath === 'object' && Object.keys(contentPath).length > 0) {
-                return contentPath;
-            }
-        }
-        
-        // Last resort: if response has tspid-like structure, use it as content
-        if (response && typeof response === 'object' && (
-            response.tspid_value || response.enabled !== undefined || response.generationMethod
-        )) {
-            return response;
-        }
-        
-        return null;
-    };
-
     const handleEditJson = () => {
         if (tspidConfig?.content && Object.keys(tspidConfig.content).length > 0) {
             setJsonContent(JSON.stringify(tspidConfig.content, null, 2));
         } else {
             // Provide a template for empty content
             setJsonContent(JSON.stringify({
-                "tspid_value": "",
-                "enabled": true,
-                "generationMethod": "manual",
-                "expiryDays": 30
+                "1048321527047168": {
+                    "pixel_id": "1048321527047168",
+                    "source": "facebook"
+                },
+                "f8x1D": {
+                    "pixel_id": "650124024655693",
+                    "source": "facebook"
+                }
             }, null, 2));
         }
         setJsonError(null);
@@ -91,52 +45,56 @@ const TSPIDPage: React.FC = () => {
         try {
             const parsed = JSON.parse(jsonString);
             
-            // Validate required fields
-            if (!parsed.tspid_value) {
-                return { isValid: false, error: 'tspid_value is required' };
+            // Validate that it's an object with TSPID entries
+            if (typeof parsed !== 'object' || parsed === null) {
+                return { isValid: false, error: 'Configuration must be a JSON object' };
             }
-            if (parsed.enabled === undefined) {
-                return { isValid: false, error: 'enabled field is required' };
+            
+            // Check if it has at least one entry
+            const keys = Object.keys(parsed);
+            if (keys.length === 0) {
+                return { isValid: false, error: 'Configuration must have at least one TSPID entry' };
             }
-            if (!parsed.generationMethod || !['manual', 'auto', 'partner_feed'].includes(parsed.generationMethod)) {
-                return { isValid: false, error: 'generationMethod must be one of: manual, auto, partner_feed' };
-            }
-            if (!parsed.expiryDays || typeof parsed.expiryDays !== 'number' || parsed.expiryDays <= 0) {
-                return { isValid: false, error: 'expiryDays must be a positive number' };
+            
+            // Validate each entry
+            for (const key of keys) {
+                const entry = parsed[key];
+                if (typeof entry !== 'object' || entry === null) {
+                    return { isValid: false, error: `Entry "${key}" must be an object` };
+                }
+                
+                if (!entry.source) {
+                    return { isValid: false, error: `Entry "${key}" must have a "source" field` };
+                }
+                
+                const validSources = ['facebook', 'google', 's2s-pusher'];
+                if (!validSources.includes(entry.source)) {
+                    return { isValid: false, error: `Entry "${key}" has invalid source "${entry.source}". Must be one of: ${validSources.join(', ')}` };
+                }
             }
             
             return { isValid: true, parsed };
-        } catch (error) {
-            return { 
-                isValid: false, 
-                error: error instanceof Error ? error.message : 'Invalid JSON format' 
-            };
+        } catch (e) {
+            return { isValid: false, error: 'Invalid JSON format' };
         }
     };
 
     const handleJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const value = e.target.value;
-        setJsonContent(value);
+        const newContent = e.target.value;
+        setJsonContent(newContent);
         
-        // Real-time validation
-        if (value.trim()) {
-            const validation = validateJson(value);
-            if (!validation.isValid) {
-                setJsonError(validation.error || 'Invalid JSON');
-            } else {
-                setJsonError(null);
-            }
+        if (newContent.trim()) {
+            const validation = validateJson(newContent);
+            setJsonError(validation.isValid ? null : validation.error || null);
         } else {
             setJsonError(null);
         }
     };
 
     const handleSaveJson = async () => {
-        if (!tspidConfig) return;
-        
         const validation = validateJson(jsonContent);
         if (!validation.isValid) {
-            setJsonError(validation.error || 'Invalid JSON format');
+            setJsonError(validation.error || null);
             return;
         }
 
@@ -144,28 +102,17 @@ const TSPIDPage: React.FC = () => {
             setSaving(true);
             setJsonError(null);
 
-            // Update the tspid config with new content
             await tspidService.update({
-                id: tspidConfig.id,
-                tspid_value: validation.parsed.tspid_value,
-                enabled: validation.parsed.enabled,
-                generationMethod: validation.parsed.generationMethod,
-                expiryDays: validation.parsed.expiryDays
-            });
-
-            // Update local state
-            setTspidConfig({
-                ...tspidConfig,
+                id: tspidConfig!.id,
                 content: validation.parsed
             });
 
+            // Refresh the config data
+            const updatedConfig = await tspidService.get(id!);
+            setTspidConfig(updatedConfig);
             setShowJsonEditor(false);
-            
-            // Show success message
-            alert('TSPID configuration updated successfully!');
-            
-        } catch (error) {
-            setJsonError(error instanceof Error ? error.message : 'Failed to save TSPID configuration');
+        } catch (err) {
+            setJsonError(err instanceof Error ? err.message : 'Failed to save configuration');
         } finally {
             setSaving(false);
         }
@@ -173,11 +120,12 @@ const TSPIDPage: React.FC = () => {
 
     const handleCloseJsonEditor = () => {
         setShowJsonEditor(false);
+        setJsonContent('');
         setJsonError(null);
     };
 
     useEffect(() => {
-        const fetchTSPIDConfig = async (retries = 2) => {
+        const fetchTSPIDConfig = async () => {
             if (!id) return;
             
             try {
@@ -185,65 +133,12 @@ const TSPIDPage: React.FC = () => {
                 setError(null);
                 setContentError(null);
                 
-                // Step 1: Get all TSPID configs to find our config and get the metadata
-                const allTSPIDs = await tspidService.list();
-                const foundTSPID = allTSPIDs.find(t => t.id === id);
-                
-                if (!foundTSPID) {
-                    setError(`TSPID configuration with ID "${id}" not found`);
-                    setLoading(false);
-                    return;
-                }
-                
-                // Step 2: Try get() method to fetch full content
-                try {
-                    const tspidWithContent = await tspidService.get(id);
-                    
-                    // Try to extract content from various possible locations
-                    const extractedContent = extractContentFromResponse(tspidWithContent);
-                    
-                    if (extractedContent) {
-                        const finalTSPID = {
-                            ...foundTSPID,
-                            ...tspidWithContent,
-                            content: extractedContent
-                        };
-                        setTspidConfig(finalTSPID);
-                    } else {
-                        setTspidConfig({
-                            ...foundTSPID,
-                            content: {
-                                tspid_value: foundTSPID.tspid_value,
-                                enabled: foundTSPID.enabled,
-                                generationMethod: foundTSPID.generationMethod,
-                                expiryDays: foundTSPID.expiryDays
-                            }
-                        });
-                        setContentError('TSPID configuration has no content or content could not be extracted');
-                    }
-                } catch (getError) {
-                    setContentError(`Failed to load content: ${getError instanceof Error ? getError.message : String(getError)}`);
-                    
-                    // Fallback to metadata only
-                    setTspidConfig({
-                        ...foundTSPID,
-                        content: {
-                            tspid_value: foundTSPID.tspid_value,
-                            enabled: foundTSPID.enabled,
-                            generationMethod: foundTSPID.generationMethod,
-                            expiryDays: foundTSPID.expiryDays
-                        }
-                    });
-                }
-                
+                const config = await tspidService.get(id);
+                setTspidConfig(config);
                 setLoading(false);
             } catch (err) {
-                if (retries > 0) {
-                    setTimeout(() => fetchTSPIDConfig(retries - 1), 1000);
-                } else {
-                    setError(err instanceof Error ? err.message : 'Failed to fetch TSPID configuration');
-                    setLoading(false);
-                }
+                setError(err instanceof Error ? err.message : 'Failed to fetch TSPID configuration');
+                setLoading(false);
             }
         };
 
@@ -290,6 +185,16 @@ const TSPIDPage: React.FC = () => {
         );
     }
 
+    // Extract configuration info from the actual data structure
+    const configName = tspidConfig.tspid_value || 'Not set';
+    const isEnabled = tspidConfig.enabled !== undefined ? tspidConfig.enabled : true;
+    const lastUpdated = tspidConfig.updated_at ? new Date(tspidConfig.updated_at).toLocaleString() : 'N/A';
+    
+    // Count TSPID entries in the content
+    const entryCount = tspidConfig.content && typeof tspidConfig.content === 'object' 
+        ? Object.keys(tspidConfig.content).length 
+        : 0;
+
     return (
         <HomeLayout>
             <div className="px-6 py-2">
@@ -303,86 +208,83 @@ const TSPIDPage: React.FC = () => {
                 </Button>
 
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold px-4 py-2">TSPID Configuration</h1>
+                    <h1 className="text-2xl font-bold px-4 py-2">TSPID Configuration: {configName}</h1>
                     <div className="flex gap-2">
                         <Button
                             onClick={() => navigate(`/tspid/edit/${tspidConfig.id}`)}
-                            className="bg-green-500 hover:bg-green-600 text-white"
+                            className="bg-green-500 hover:bg-green-600 text-white whitespace-nowrap min-h-[40px] flex items-center justify-center"
                         >
-                            Edit TSPID Config
+                            Edit Config
                         </Button>
                         <Button
                             onClick={handleEditJson}
-                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                            className="bg-blue-500 hover:bg-blue-600 text-white whitespace-nowrap min-h-[40px] flex items-center justify-center"
                         >
                             Edit JSON
                         </Button>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
-                    <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Configuration Info */}
+                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                    <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <h2 className="text-sm font-medium text-gray-500">TSPID Value</h2>
-                            <p className="mt-1">{tspidConfig.tspid_value || 'Not set'}</p>
+                            <h2 className="text-sm font-medium text-gray-500">Configuration Name</h2>
+                            <p className="mt-1 font-medium">{configName}</p>
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-gray-500">Status</h2>
-                            <p className="mt-1">{tspidConfig.enabled ? 'Enabled' : 'Disabled'}</p>
+                            <p className="mt-1">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    isEnabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                    {isEnabled ? 'Active' : 'Inactive'}
+                                </span>
+                            </p>
                         </div>
                         <div>
-                            <h2 className="text-sm font-medium text-gray-500">Generation Method</h2>
-                            <p className="mt-1">{tspidConfig.generationMethod}</p>
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-medium text-gray-500">Expiry Days</h2>
-                            <p className="mt-1">{tspidConfig.expiryDays}</p>
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-medium text-gray-500">Version</h2>
-                            <p className="mt-1">v{tspidConfig.version || '1'}</p>
+                            <h2 className="text-sm font-medium text-gray-500">TSPID Entries</h2>
+                            <p className="mt-1 font-medium">{entryCount}</p>
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-gray-500">Last Updated</h2>
-                            <p className="mt-1">{tspidConfig.updated_at ? new Date(tspidConfig.updated_at).toLocaleString() : 'N/A'}</p>
+                            <p className="mt-1">{lastUpdated}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-6">
-                    <h2 className="text-sm font-medium text-gray-500 mb-4">Configuration</h2>
+                {/* JSON Configuration */}
+                <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-semibold mb-4">Configuration JSON</h2>
                     
-                    {/* Show content error if any */}
                     {contentError && (
                         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
                             <p className="text-yellow-800 text-sm">{contentError}</p>
                         </div>
                     )}
                     
-                    <div className="bg-white rounded-lg shadow">
-                        <div className="p-4 bg-gray-50 rounded" style={{ height: 'calc(100vh - 400px)', overflow: 'auto' }}>
-                            {tspidConfig.content && Object.keys(tspidConfig.content).length > 0 ? (
-                                <ReactJson
-                                    src={tspidConfig.content}
-                                    name={false}
-                                    theme="rjv-default"
-                                    enableClipboard={false}
-                                    displayDataTypes={false}
-                                    displayObjectSize={false}
-                                    quotesOnKeys={false}
-                                />
-                            ) : (
-                                <div className="text-center py-8 text-gray-500">
-                                    <p className="text-lg mb-2">No configuration available</p>
-                                    <p className="text-sm">
-                                        {contentError 
-                                            ? 'There was an issue loading the TSPID configuration.' 
-                                            : 'This TSPID configuration has no JSON content configured.'
-                                        }
-                                    </p>
-                                </div>
-                            )}
-                        </div>
+                    <div className="bg-gray-50 rounded p-4" style={{ height: '500px', overflow: 'auto' }}>
+                        {tspidConfig.content && Object.keys(tspidConfig.content).length > 0 ? (
+                            <ReactJson
+                                src={tspidConfig.content}
+                                name={false}
+                                theme="rjv-default"
+                                enableClipboard={false}
+                                displayDataTypes={false}
+                                displayObjectSize={false}
+                                quotesOnKeys={false}
+                            />
+                        ) : (
+                            <div className="text-center py-8 text-gray-500">
+                                <p className="text-lg mb-2">No JSON configuration available</p>
+                                <p className="text-sm">
+                                    {contentError 
+                                        ? 'There was an issue loading the TSPID configuration.' 
+                                        : 'This TSPID configuration has no JSON content configured.'
+                                    }
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

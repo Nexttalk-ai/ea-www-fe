@@ -2,17 +2,13 @@ import { TSPID } from '../types/types';
 
 export interface CreateTSPIDData {
     tspid_value: string;
-    enabled: boolean;
-    generationMethod: 'manual' | 'auto' | 'partner_feed';
-    expiryDays: number;
+    content?: any;
 }
 
 export interface UpdateTSPIDData {
     id: string;
     tspid_value?: string;
-    enabled?: boolean;
-    generationMethod?: 'manual' | 'auto' | 'partner_feed';
-    expiryDays?: number;
+    content?: any;
 }
 
 class TSPIDService {
@@ -34,19 +30,14 @@ class TSPIDService {
         const newTSPID: TSPID = {
             id: Date.now().toString(),
             tspid_value: data.tspid_value,
-            enabled: data.enabled,
-            generationMethod: data.generationMethod,
-            expiryDays: data.expiryDays,
+            enabled: true,
+            generationMethod: 'manual',
+            expiryDays: 30,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             deleted_at: null,
             version: 1,
-            content: {
-                tspid_value: data.tspid_value,
-                enabled: data.enabled,
-                generationMethod: data.generationMethod,
-                expiryDays: data.expiryDays
-            }
+            content: data.content || {}
         };
         
         tspids.push(newTSPID);

@@ -192,7 +192,6 @@ const UserDetails: React.FC = () => {
                 id: id!,
                 name: editedUser.name || user.name,
                 email: editedUser.email || user.email,
-
                 organizations: editedUser.organizations || user.organizations,
                 deleted_at: editedUser.deleted_at,
                 version: user.version

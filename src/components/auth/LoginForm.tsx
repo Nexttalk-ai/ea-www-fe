@@ -65,7 +65,7 @@ const LoginForm: React.FC = () => {
 
   return (
     <>
-    <div className="absolute top-4 left-4">
+    <div className="absolute top-4 right-4">
       <Logo imageSrc="/images/ExplorAdsAdminLogo.png"
             size={80}
             className="flex shrink-0"

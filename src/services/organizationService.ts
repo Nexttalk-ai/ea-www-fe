@@ -1,4 +1,6 @@
-const API_BASE_URL = 'https://282x80mwdj.execute-api.us-west-2.amazonaws.com/dev/organization';
+import { getApiUrl } from '../config/api';
+
+const API_BASE_URL = getApiUrl('/organization');
 
 export interface Organization {
     id: string;
@@ -95,7 +97,7 @@ class OrganizationService {
         const organization = await orgResponse.json();
 
         // Then, get all users to find which ones belong to this organization
-        const usersResponse = await fetch('https://282x80mwdj.execute-api.us-west-2.amazonaws.com/dev/user/list', {
+        const usersResponse = await fetch(getApiUrl('/user/list'), {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({

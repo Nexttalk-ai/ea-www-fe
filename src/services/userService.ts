@@ -1,4 +1,6 @@
-const API_BASE_URL = 'https://282x80mwdj.execute-api.us-west-2.amazonaws.com/dev/user';
+import { getApiUrl } from '../config/api';
+
+const API_BASE_URL = getApiUrl('/user');
 
 export interface User {
     id: string;

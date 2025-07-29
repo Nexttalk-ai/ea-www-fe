@@ -160,13 +160,14 @@ const TSPIDConfigsPage = () => {
     const columnDefs: ColDef[] = [
         {
             field: 'tspid_value',
-            headerName: 'TSPID Value',
+            headerName: 'Configuration Name',
             sortable: true,
             filter: true,
             flex: 2,
             minWidth: 200,
             headerClass: 'ag-header-cell-with-separator'
         },
+
         {
             field: 'enabled',
             headerName: 'Status',
@@ -181,33 +182,6 @@ const TSPIDConfigsPage = () => {
                     {params.value ? 'Active' : 'Inactive'}
                 </span>
             ),
-            headerClass: 'ag-header-cell-with-separator'
-        },
-        {
-            field: 'generationMethod',
-            headerName: 'Generation Method',
-            sortable: true,
-            filter: true,
-            flex: 1.5,
-            minWidth: 150,
-            cellRenderer: (params: any) => {
-                const method = params.value;
-                const labels: { [key: string]: string } = {
-                    'manual': 'Manual',
-                    'auto': 'Auto',
-                    'partner_feed': 'Partner Feed'
-                };
-                return labels[method] || method;
-            },
-            headerClass: 'ag-header-cell-with-separator'
-        },
-        {
-            field: 'expiryDays',
-            headerName: 'Expiry Days',
-            sortable: true,
-            filter: true,
-            flex: 1,
-            minWidth: 120,
             headerClass: 'ag-header-cell-with-separator'
         },
         {
