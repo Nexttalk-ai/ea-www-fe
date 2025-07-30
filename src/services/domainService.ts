@@ -1,4 +1,7 @@
 import { Domain } from '../types/types';
+import { getApiUrl } from '../config/api';
+
+const API_BASE_URL = getApiUrl('/domain');
 
 export interface CreateDomainData {
     name: string;
@@ -14,84 +17,87 @@ export interface UpdateDomainData {
 }
 
 class DomainService {
-    private getStorageKey() {
-        return 'domains_data';
-    }
-
-    private getStoredDomains(): Domain[] {
-        const stored = localStorage.getItem(this.getStorageKey());
-        return stored ? JSON.parse(stored) : [];
-    }
-
-    private setStoredDomains(domains: Domain[]) {
-        localStorage.setItem(this.getStorageKey(), JSON.stringify(domains));
+    private getHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('ID_TOKEN')}`
+        };
     }
 
     async create(data: CreateDomainData): Promise<Domain> {
-        const domains = this.getStoredDomains();
-        const newDomain: Domain = {
-            id: Date.now().toString(),
-            name: data.name,
-            address: data.address,
-            status: data.status,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            deleted_at: null,
-            version: 1
-        };
-        
-        domains.push(newDomain);
-        this.setStoredDomains(domains);
-        return newDomain;
+        const response = await fetch(`${API_BASE_URL}/create`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'create',
+                data: data
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     }
 
     async update(data: UpdateDomainData): Promise<Domain> {
-        const domains = this.getStoredDomains();
-        const index = domains.findIndex(d => d.id === data.id);
-        
-        if (index === -1) {
-            throw new Error('Domain not found');
+        const response = await fetch(`${API_BASE_URL}/update`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'update',
+                data: data
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const updatedDomain: Domain = {
-            ...domains[index],
-            ...data,
-            updated_at: new Date().toISOString(),
-            version: domains[index].version + 1
-        };
-
-        domains[index] = updatedDomain;
-        this.setStoredDomains(domains);
-        return updatedDomain;
+        return response.json();
     }
 
     async delete(id: string): Promise<{ status: string; id: string }> {
-        const domains = this.getStoredDomains();
-        const index = domains.findIndex(d => d.id === id);
-        
-        if (index === -1) {
-            throw new Error('Domain not found');
+        const response = await fetch(`${API_BASE_URL}/delete`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'delete',
+                data: {
+                    id: id
+                }
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        domains.splice(index, 1);
-        this.setStoredDomains(domains);
-        
-        return { status: 'success', id };
+        return response.json();
     }
 
     async get(id: string): Promise<Domain> {
-        const domains = this.getStoredDomains();
-        const domain = domains.find(d => d.id === id);
-        
-        if (!domain) {
-            throw new Error('Domain not found');
+        const response = await fetch(`${API_BASE_URL}/get?id=${encodeURIComponent(id)}`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'get',
+                data: { id }
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        return domain;
+        return response.json();
     }
 
     async list(): Promise<Domain[]> {
-        return this.getStoredDomains();
+        const response = await fetch(`${API_BASE_URL}/list`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'list'
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     }
 }
 

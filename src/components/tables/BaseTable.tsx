@@ -186,6 +186,7 @@ const BaseTable = <T extends object>({
                     suppressRowClickSelection={false}
                     rowMultiSelectWithClick={false}
                     theme="legacy"
+                    domLayout="autoHeight"
                 />
             </div>
 

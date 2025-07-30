@@ -175,19 +175,25 @@ const OrganizationDetails = () => {
             minWidth: 200,
         },
         {
-            field: 'role',
-            headerName: 'Role',
+            field: 'email',
+            headerName: 'Email',
             flex: 1,
-            minWidth: 150,
+            minWidth: 200,
         },
         {
-            field: 'created_at',
-            headerName: 'Created At',
+            field: 'status',
+            headerName: 'Status',
             flex: 1,
-            minWidth: 150,
+            minWidth: 120,
+        },
+        {
+            field: 'organization',
+            headerName: 'Organizations',
+            flex: 1,
+            minWidth: 200,
             valueFormatter: (params) => {
                 if (!params.value) return '';
-                return new Date(params.value).toLocaleString();
+                return Array.isArray(params.value) ? params.value.join(', ') : params.value;
             }
         },
         {
