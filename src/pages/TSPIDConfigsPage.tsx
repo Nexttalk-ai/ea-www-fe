@@ -7,7 +7,6 @@ import { AgGridReact } from "ag-grid-react";
 
 import { tspidService } from '../services/tspidService';
 import { TSPID } from '../types/types';
-import { FaRegFileCode } from 'react-icons/fa';
 import { useNotification } from '../hooks/useNotification';
 import Button from '../components/ui/Button';
 import ViewButton from '../components/ui/ViewButton';
@@ -438,9 +437,8 @@ const TSPIDConfigsPage = () => {
                             setModalMode('add');
                             setIsModalOpen(true);
                         }}
-                        className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+                        className="bg-white text-black flex items-center justify-center gap-[10px] w-[96px] h-[30px] rounded-[2px] border border-[#d9d9d9] px-[15px] py-[6.4px] shadow-sm font-normal text-base"
                     >
-                        <FaRegFileCode />
                         Add
                     </Button>
                 }
@@ -502,7 +500,6 @@ const TSPIDConfigsPage = () => {
                             </svg>
                         </button>
                         <div className="flex flex-col items-center">
-                            <FaRegFileCode className="mb-2 w-8 h-8" />
                             <h2 className="text-xl font-semibold">
                                 {modalMode === 'add' ? 'Create a new TSPID configuration' : 'Edit TSPID configuration'}
                             </h2>
