@@ -5,12 +5,14 @@ import Button from '../components/ui/Button';
 import HomeLayout from '../layouts/HomeLayout';
 import { FaArrowLeft, FaRedo, FaTimes, FaSave } from 'react-icons/fa';
 import { tspidService } from '../services/tspidService';
+import { organizationService, Organization } from '../services/organizationService';
 import { TSPID } from '../types/types';
 
 const TSPIDPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [tspidConfig, setTspidConfig] = useState<TSPID | null>(null);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [contentError, setContentError] = useState<string | null>(null);
@@ -21,12 +23,19 @@ const TSPIDPage: React.FC = () => {
     const [jsonError, setJsonError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
 
+    // Helper function to get organization name by ID
+    const getOrganizationName = (organizationId: string) => {
+        const organization = organizations.find(org => org.id === organizationId);
+        return organization ? organization.name : organizationId;
+    };
+
     const handleEditJson = () => {
         // Create a JSON representation of the current TSPID object
         const tspidObject = {
             id: tspidConfig?.id,
             revshare_coefficient: tspidConfig?.revshare_coefficient,
             organization_id: tspidConfig?.organization_id,
+            organization_name: getOrganizationName(tspidConfig?.organization_id || ''),
             created_at: tspidConfig?.created_at,
             updated_at: tspidConfig?.updated_at,
             deleted_at: tspidConfig?.deleted_at,
@@ -122,8 +131,12 @@ const TSPIDPage: React.FC = () => {
                 setError(null);
                 setContentError(null);
                 
-                const config = await tspidService.get(id);
+                const [config, orgData] = await Promise.all([
+                    tspidService.get(id),
+                    organizationService.list()
+                ]);
                 setTspidConfig(config);
+                setOrganizations(orgData);
                 setLoading(false);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to fetch TSPID configuration');
@@ -219,7 +232,7 @@ const TSPIDPage: React.FC = () => {
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-gray-500">Organization ID</h2>
-                            <p className="mt-1 font-medium">{tspidConfig.organization_id}</p>
+                            <p className="mt-1 font-medium">{getOrganizationName(tspidConfig.organization_id)}</p>
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-gray-500">Status</h2>
@@ -257,7 +270,10 @@ const TSPIDPage: React.FC = () => {
                     
                     <div className="bg-gray-50 rounded p-4" style={{ height: '500px', overflow: 'auto' }}>
                         <ReactJson
-                            src={tspidConfig}
+                            src={{
+                                ...tspidConfig,
+                                organization_name: getOrganizationName(tspidConfig.organization_id)
+                            }}
                             name={false}
                             theme="rjv-default"
                             enableClipboard={false}

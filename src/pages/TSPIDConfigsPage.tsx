@@ -6,6 +6,7 @@ import type { ColDef, GridApi, GridReadyEvent } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 
 import { tspidService } from '../services/tspidService';
+import { organizationService, Organization } from '../services/organizationService';
 import { TSPID } from '../types/types';
 import { useNotification } from '../hooks/useNotification';
 import Button from '../components/ui/Button';
@@ -40,6 +41,7 @@ type TSPIDValidationError = {
 
 const TSPIDConfigsPage = () => {
     const [rowData, setRowData] = useState<TSPID[]>([]);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -61,6 +63,18 @@ const TSPIDConfigsPage = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [quickFilterText, setQuickFilterText] = useState<string>();
+
+    // Create organization options for the select component
+    const organizationOptions = organizations.map(org => ({
+        value: org.id,
+        label: org.name
+    }));
+
+    // Helper function to get organization name by ID
+    const getOrganizationName = (organizationId: string) => {
+        const organization = organizations.find(org => org.id === organizationId);
+        return organization ? organization.name : organizationId;
+    };
 
     const calculateRowsPerPage = () => {
         const containerHeight = window.innerHeight - 350;
@@ -118,8 +132,12 @@ const TSPIDConfigsPage = () => {
         try {
             setIsLoading(true);
             setError(null);
-            const data = await tspidService.list();
-            setRowData(data);
+            const [tspidData, orgData] = await Promise.all([
+                tspidService.list(),
+                organizationService.list()
+            ]);
+            setRowData(tspidData);
+            setOrganizations(orgData);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch TSPID configurations');
         } finally {
@@ -275,12 +293,15 @@ const TSPIDConfigsPage = () => {
         },
         {
             field: 'organization_id',
-            headerName: 'Organization ID',
+            headerName: 'Organization',
             sortable: true,
             filter: true,
             flex: 2,
             minWidth: 200,
-            headerClass: 'ag-header-cell-with-separator'
+            headerClass: 'ag-header-cell-with-separator',
+            valueGetter: (params) => {
+                return getOrganizationName(params.data.organization_id);
+            }
         },
         {
             field: 'revshare_coefficient',
@@ -522,18 +543,14 @@ const TSPIDConfigsPage = () => {
                                 }}
                                 className={errors.id ? 'border-red-500' : ''}
                             />
-                            <Input
-                                type="text"
-                                label="Organization ID"
-                                placeholder="Enter organization ID"
-                                value={formData.organization_id || ''}
-                                onChange={(e) => handleInputChange('organization_id', e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleSubmit();
-                                    }
-                                }}
+                            <Select
+                                id="organization"
+                                label="Organization"
+                                options={organizationOptions}
+                                value={formData.organization_id ? [formData.organization_id] : []}
+                                onChange={(value) => handleInputChange('organization_id', value[0] || '')}
+                                placeholder="Select organization..."
+                                showSearchBar={true}
                                 className={errors.organization_id ? 'border-red-500' : ''}
                             />
                             <Input
