@@ -579,7 +579,14 @@ const DomainsTable = () => {
                                     className="flex items-center p-2 border rounded-md bg-white min-h-[42px] cursor-pointer"
                                     onClick={() => setShowStatusDropdown(!showStatusDropdown)}
                                 >
-                                    <span className="text-black ml-2">{formData.status === 'ENABLED' ? 'Enabled' : 'Disabled'}</span>
+                                    <div className="flex items-center gap-2">
+                                        <div 
+                                            className={`w-2 h-2 rounded-full ${
+                                            formData.status === 'ENABLED' ? 'bg-green-500' : 'bg-gray-400'
+                                        }`}
+                                    />
+                                        <span className="text-black">{formData.status === 'ENABLED' ? 'Enabled' : 'Disabled'}</span>
+                                    </div>
                                 </div>
                                 {showStatusDropdown && (
                                     <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">

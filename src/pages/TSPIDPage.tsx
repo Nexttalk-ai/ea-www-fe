@@ -224,11 +224,14 @@ const TSPIDPage: React.FC = () => {
                         <div>
                             <h2 className="text-sm font-medium text-gray-500">Status</h2>
                             <p className="mt-1">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    isEnabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                    {isEnabled ? 'Enabled' : 'Disabled'}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <div 
+                                        className={`w-2 h-2 rounded-full ${
+                                        isEnabled ? 'bg-green-500' : 'bg-gray-400'
+                                    }`}
+                                />
+                                    <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
+                                </div>
                             </p>
                         </div>
                         <div>

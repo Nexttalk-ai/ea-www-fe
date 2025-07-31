@@ -302,13 +302,18 @@ const TSPIDConfigsPage = () => {
             filter: true,
             flex: 1,
             minWidth: 120,
-            cellRenderer: (params: any) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    params.value === 'ENABLED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                    {params.value === 'ENABLED' ? 'Enabled' : 'Disabled'}
-                </span>
-            ),
+            cellRenderer: (params: any) => {
+                return (
+                    <div className="flex items-center gap-2">
+                        <div 
+                            className={`w-2 h-2 rounded-full ${
+                            params.value === 'ENABLED' ? 'bg-green-500' : 'bg-gray-400'
+                        }`}
+                    />
+                    <span>{params.value === 'ENABLED' ? 'Enabled' : 'Disabled'}</span>
+                </div>
+            )
+          },
             headerClass: 'ag-header-cell-with-separator'
         },
         {
