@@ -1,97 +1,104 @@
 import { TSPID } from '../types/types';
+import { getApiUrl } from '../config/api';
+
+const API_BASE_URL = getApiUrl('/tspid');
 
 export interface CreateTSPIDData {
-    tspid_value: string;
-    content?: any;
+    id: string;
+    organization_id: string;
+    revshare_coefficient?: number;
+    status?: 'ENABLED' | 'DISABLED';
 }
 
 export interface UpdateTSPIDData {
     id: string;
-    tspid_value?: string;
-    content?: any;
+    organization_id?: string;
+    revshare_coefficient?: number;
+    status?: 'ENABLED' | 'DISABLED';
 }
 
 class TSPIDService {
-    private getStorageKey() {
-        return 'tspid_data';
-    }
-
-    private getStoredTSPIDs(): TSPID[] {
-        const stored = localStorage.getItem(this.getStorageKey());
-        return stored ? JSON.parse(stored) : [];
-    }
-
-    private setStoredTSPIDs(tspids: TSPID[]) {
-        localStorage.setItem(this.getStorageKey(), JSON.stringify(tspids));
+    private getHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('ID_TOKEN')}`
+        };
     }
 
     async create(data: CreateTSPIDData): Promise<TSPID> {
-        const tspids = this.getStoredTSPIDs();
-        const newTSPID: TSPID = {
-            id: Date.now().toString(),
-            tspid_value: data.tspid_value,
-            enabled: true,
-            generationMethod: 'manual',
-            expiryDays: 30,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            deleted_at: null,
-            version: 1,
-            content: data.content || {}
-        };
-        
-        tspids.push(newTSPID);
-        this.setStoredTSPIDs(tspids);
-        return newTSPID;
+        const response = await fetch(`${API_BASE_URL}/create`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'create',
+                data: data
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     }
 
     async update(data: UpdateTSPIDData): Promise<TSPID> {
-        const tspids = this.getStoredTSPIDs();
-        const index = tspids.findIndex(t => t.id === data.id);
-        
-        if (index === -1) {
-            throw new Error('TSPID not found');
+        const response = await fetch(`${API_BASE_URL}/update`, {
+            method: 'PUT',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'update',
+                data: data
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const updatedTSPID: TSPID = {
-            ...tspids[index],
-            ...data,
-            updated_at: new Date().toISOString(),
-            version: tspids[index].version + 1
-        };
-
-        tspids[index] = updatedTSPID;
-        this.setStoredTSPIDs(tspids);
-        return updatedTSPID;
+        return response.json();
     }
 
     async delete(id: string): Promise<{ status: string; id: string }> {
-        const tspids = this.getStoredTSPIDs();
-        const index = tspids.findIndex(t => t.id === id);
-        
-        if (index === -1) {
-            throw new Error('TSPID not found');
+        const response = await fetch(`${API_BASE_URL}/delete`, {
+            method: 'DELETE',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'delete',
+                data: {
+                    id: id
+                }
+            }),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        tspids.splice(index, 1);
-        this.setStoredTSPIDs(tspids);
-        
-        return { status: 'success', id };
+        return response.json();
     }
 
     async get(id: string): Promise<TSPID> {
-        const tspids = this.getStoredTSPIDs();
-        const tspid = tspids.find(t => t.id === id);
-        
-        if (!tspid) {
-            throw new Error('TSPID not found');
+        const response = await fetch(`${API_BASE_URL}/get?id=${encodeURIComponent(id)}`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'get',
+                data: { id }
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        return tspid;
+        return response.json();
     }
 
     async list(): Promise<TSPID[]> {
-        return this.getStoredTSPIDs();
+        const response = await fetch(`${API_BASE_URL}/list`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({
+                action: 'list'
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     }
 }
 

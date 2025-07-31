@@ -5,15 +5,15 @@ const API_BASE_URL = getApiUrl('/domain');
 
 export interface CreateDomainData {
     name: string;
-    address: string;
-    status: 'active' | 'inactive';
+    domain_url: string;
+    status: 'ENABLED' | 'DISABLED';
 }
 
 export interface UpdateDomainData {
     id: string;
     name?: string;
-    address?: string;
-    status?: 'active' | 'inactive';
+    domain_url?: string;
+    status?: 'ENABLED' | 'DISABLED';
 }
 
 class DomainService {

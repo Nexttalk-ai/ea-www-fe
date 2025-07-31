@@ -18,14 +18,41 @@ import CustomPagination from '../components/ui/CustomPagination';
 import { DeleteConfirmationModal } from '../components/ui/DeleteConfirmationModal';
 import PageContainer from '../components/ui/PageContainer';
 import HomeLayout from '../layouts/HomeLayout';
+import { Modal } from '../components/ui/Modal';
+import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+type ModalMode = 'add' | 'edit';
+
+type TSPIDData = {
+    id: string;
+    organization_id: string;
+    revshare_coefficient: number | null;
+    status: 'ENABLED' | 'DISABLED';
+};
+
+type TSPIDValidationError = {
+    id?: boolean;
+    organization_id?: boolean;
+    revshare_coefficient?: boolean;
+};
 
 const TSPIDConfigsPage = () => {
     const [rowData, setRowData] = useState<TSPID[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [gridApi, setGridApi] = useState<GridApi | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalMode, setModalMode] = useState<ModalMode>('add');
+    const [formData, setFormData] = useState<Partial<TSPID>>({
+        id: '',
+        organization_id: '',
+        revshare_coefficient: null,
+        status: 'ENABLED'
+    });
+    const [errors, setErrors] = useState<TSPIDValidationError>({});
     const [tspidToDelete, setTspidToDelete] = useState<TSPID | null>(null);
     const [showConfirmDelete, setShowConfirmDelete] = useState(false);
     const { show, NotificationContainer } = useNotification();
@@ -106,7 +133,14 @@ const TSPIDConfigsPage = () => {
     }, []);
 
     const handleEdit = (tspid: TSPID) => {
-        navigate(`/tspid/${tspid.id}`);
+        setFormData({
+            id: tspid.id,
+            organization_id: tspid.organization_id,
+            revshare_coefficient: tspid.revshare_coefficient,
+            status: tspid.status
+        });
+        setModalMode('edit');
+        setIsModalOpen(true);
     };
 
     const handleDelete = (tspid: TSPID) => {
@@ -118,9 +152,30 @@ const TSPIDConfigsPage = () => {
         navigate(`/tspid/${tspid.id}`);
     };
 
-    const showNotificationModal = (message: string, type: 'success' | 'error', operation: 'delete' = 'delete') => {
-        const title = 'Delete TSPID Config';
-        const successMessage = 'TSPID configuration successfully deleted';
+    const handleInputChange = (field: keyof TSPID, value: any) => {
+        setFormData((prev: Partial<TSPID>) => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const validateForm = () => {
+        const newErrors: TSPIDValidationError = {};
+        
+        if (!formData.id?.trim()) newErrors.id = true;
+        if (!formData.organization_id?.trim()) newErrors.organization_id = true;
+        if (formData.revshare_coefficient !== null && formData.revshare_coefficient !== undefined && formData.revshare_coefficient < 0) newErrors.revshare_coefficient = true;
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const showNotificationModal = (message: string, type: 'success' | 'error', operation: 'add' | 'edit' | 'delete' = 'add') => {
+        const title = operation === 'add' ? 'Add TSPID Config' : operation === 'edit' ? 'Edit TSPID Config' : 'Delete TSPID Config';
+        
+        const successMessage = operation === 'add' ? 'TSPID configuration successfully created' : 
+                             operation === 'edit' ? 'TSPID configuration successfully updated' : 
+                             'TSPID configuration successfully deleted';
         const errorMessage = message || 'An error occurred while processing your request';
         
         show(
@@ -133,6 +188,58 @@ const TSPIDConfigsPage = () => {
                 position: 'top-right'
             }
         );
+    };
+
+    const handleSubmit = async () => {
+        try {
+            if (!validateForm()) {
+                showNotificationModal('Please correct the errors before submitting', 'error', modalMode);
+                return;
+            }
+
+            setIsLoading(true);
+            if (modalMode === 'add') {
+                try {
+                    const createData = {
+                        id: formData.id!.trim(),
+                        organization_id: formData.organization_id!.trim(),
+                        revshare_coefficient: formData.revshare_coefficient || undefined,
+                        status: formData.status || 'ENABLED'
+                    };
+                    await tspidService.create(createData);
+                    showNotificationModal('', 'success', modalMode);
+                    await fetchTSPIDs();
+                    setIsModalOpen(false);
+                    setFormData({ id: '', organization_id: '', revshare_coefficient: null, status: 'ENABLED' });
+                    setErrors({});
+                } catch (err) {
+                    const errorMessage = err instanceof Error ? err.message : 'Failed to create TSPID configuration';
+                    showNotificationModal(errorMessage, 'error', modalMode);
+                }
+            } else {
+                if (!formData.id) {
+                    throw new Error('TSPID ID is missing');
+                }
+                const updateData = {
+                    id: formData.id,
+                    organization_id: formData.organization_id?.trim(),
+                    revshare_coefficient: formData.revshare_coefficient || undefined,
+                    status: formData.status
+                };
+                await tspidService.update(updateData);
+                showNotificationModal('', 'success', modalMode);
+                await fetchTSPIDs();
+                setIsModalOpen(false);
+                setFormData({ id: '', organization_id: '', revshare_coefficient: null, status: 'ENABLED' });
+                setErrors({});
+            }
+        } catch (err) {
+            console.error('Error handling TSPID:', err);
+            const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+            showNotificationModal(errorMessage, 'error', modalMode);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const confirmDelete = async () => {
@@ -159,17 +266,37 @@ const TSPIDConfigsPage = () => {
 
     const columnDefs: ColDef[] = [
         {
-            field: 'tspid_value',
-            headerName: 'Configuration Name',
+            field: 'id',
+            headerName: 'TSPID',
+            sortable: true,
+            filter: true,
+            flex: 1,
+            minWidth: 120,
+            headerClass: 'ag-header-cell-with-separator'
+        },
+        {
+            field: 'organization_id',
+            headerName: 'Organization ID',
             sortable: true,
             filter: true,
             flex: 2,
             minWidth: 200,
             headerClass: 'ag-header-cell-with-separator'
         },
-
         {
-            field: 'enabled',
+            field: 'revshare_coefficient',
+            headerName: 'Revshare Coefficient',
+            sortable: true,
+            filter: true,
+            flex: 1,
+            minWidth: 150,
+            cellRenderer: (params: any) => {
+                return params.value !== null ? params.value : 'N/A';
+            },
+            headerClass: 'ag-header-cell-with-separator'
+        },
+        {
+            field: 'status',
             headerName: 'Status',
             sortable: true,
             filter: true,
@@ -177,9 +304,9 @@ const TSPIDConfigsPage = () => {
             minWidth: 120,
             cellRenderer: (params: any) => (
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    params.value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    params.value === 'ENABLED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                    {params.value ? 'Active' : 'Inactive'}
+                    {params.value === 'ENABLED' ? 'Enabled' : 'Disabled'}
                 </span>
             ),
             headerClass: 'ag-header-cell-with-separator'
@@ -296,7 +423,16 @@ const TSPIDConfigsPage = () => {
                 }
                 rightElement={
                     <Button
-                        onClick={() => navigate('/tspid/add-tspid')}
+                        onClick={() => {
+                            setFormData({
+                                id: '',
+                                organization_id: '',
+                                revshare_coefficient: null,
+                                status: 'ENABLED'
+                            });
+                            setModalMode('add');
+                            setIsModalOpen(true);
+                        }}
                         className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
                     >
                         <FaRegFileCode />
@@ -345,6 +481,114 @@ const TSPIDConfigsPage = () => {
                     )}
                 </div>
 
+                <Modal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    classNameBackground="bg-black/50"
+                    classNameModal="fixed w-[460px] h-[569px] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                >
+                    <Modal.Header className="relative border-none">
+                        <button 
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div className="flex flex-col items-center">
+                            <FaRegFileCode className="mb-2 w-8 h-8" />
+                            <h2 className="text-xl font-semibold">
+                                {modalMode === 'add' ? 'Create a new TSPID configuration' : 'Edit TSPID configuration'}
+                            </h2>
+                        </div>
+                    </Modal.Header>
+
+                    <Modal.Body className="border-none">
+                        <div className="flex flex-col gap-4">
+                            <Input
+                                type="text"
+                                label="TSPID"
+                                placeholder="Enter TSPID"
+                                value={formData.id || ''}
+                                onChange={(e) => handleInputChange('id', e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSubmit();
+                                    }
+                                }}
+                                className={errors.id ? 'border-red-500' : ''}
+                            />
+                            <Input
+                                type="text"
+                                label="Organization ID"
+                                placeholder="Enter organization ID"
+                                value={formData.organization_id || ''}
+                                onChange={(e) => handleInputChange('organization_id', e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSubmit();
+                                    }
+                                }}
+                                className={errors.organization_id ? 'border-red-500' : ''}
+                            />
+                            <Input
+                                type="number"
+                                label="Revshare Coefficient"
+                                placeholder="Enter coefficient (optional)"
+                                value={formData.revshare_coefficient || ''}
+                                onChange={(e) => handleInputChange('revshare_coefficient', e.target.value ? parseFloat(e.target.value) : null)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSubmit();
+                                    }
+                                }}
+                                className={errors.revshare_coefficient ? 'border-red-500' : ''}
+                            />
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-black">Status</label>
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="status"
+                                            checked={formData.status === 'ENABLED'}
+                                            onChange={() => handleInputChange('status', 'ENABLED')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-black">Enabled</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                        <input
+                                            type="radio"
+                                            name="status"
+                                            checked={formData.status === 'DISABLED'}
+                                            onChange={() => handleInputChange('status', 'DISABLED')}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-black">Disabled</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </Modal.Body>
+
+                    <Modal.Footer className="border-none">
+                        <div className="flex justify-center w-full">
+                            <Button
+                                className="w-[114px] h-[40px] rounded-[2px] border border-[#d9d9d9] px-[15px] py-[6.4px] gap-[10px] bg-white text-black hover:text-gray-600"
+                                onClick={handleSubmit}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Saving...' : modalMode === 'add' ? 'Add' : 'Save'}
+                            </Button>
+                        </div>
+                    </Modal.Footer>
+                </Modal>
+
                 <DeleteConfirmationModal
                     isOpen={showConfirmDelete}
                     onClose={() => {
@@ -353,7 +597,7 @@ const TSPIDConfigsPage = () => {
                     }}
                     onConfirm={confirmDelete}
                     title="Delete TSPID Configuration"
-                    message={`Are you sure you want to delete the TSPID configuration "${tspidToDelete?.tspid_value}"? This action cannot be undone.`}
+                    message={`Are you sure you want to delete the TSPID configuration "${tspidToDelete?.id}"? This action cannot be undone.`}
                     isLoading={isLoading}
                 />
 

@@ -38,13 +38,13 @@ const themeClass: string = tableTheme.isDarkMode ? `${tableTheme.gridTheme}-dark
 
 type DomainData = {
     name: string;
-    address: string;
-    status: 'active' | 'inactive';
+    domain_url: string;
+    status: 'ENABLED' | 'DISABLED';
 };
 
 type DomainValidationError = {
     name?: boolean;
-    address?: boolean;
+    domain_url?: boolean;
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,8 +59,8 @@ const DomainsTable = () => {
     const [modalMode, setModalMode] = useState<ModalMode>('add');
     const [formData, setFormData] = useState<Partial<Domain>>({
         name: '',
-        address: '',
-        status: 'active'
+        domain_url: '',
+        status: 'ENABLED'
     });
     const [domainToDelete, setDomainToDelete] = useState<Domain | null>(null);
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -184,7 +184,7 @@ const DomainsTable = () => {
         setFormData({
             id: domain.id,
             name: domain.name,
-            address: domain.address,
+            domain_url: domain.domain_url,
             status: domain.status
         });
         setModalMode('edit');
@@ -196,7 +196,7 @@ const DomainsTable = () => {
         setShowConfirmDelete(true);
     };
 
-    const handleInputChange = (field: keyof Domain, value: string | 'active' | 'inactive') => {
+    const handleInputChange = (field: keyof Domain, value: string | 'ENABLED' | 'DISABLED') => {
         setFormData((prev: Partial<Domain>) => ({
             ...prev,
             [field]: value
@@ -207,7 +207,7 @@ const DomainsTable = () => {
         const newErrors: DomainValidationError = {};
         
         if (!formData.name?.trim()) newErrors.name = true;
-        if (!formData.address?.trim()) newErrors.address = true;
+        if (!formData.domain_url?.trim()) newErrors.domain_url = true;
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -265,14 +265,14 @@ const DomainsTable = () => {
                 try {
                     const createData = {
                         name: formData.name!.trim(),
-                        address: formData.address!.trim(),
-                        status: formData.status || 'active'
+                        domain_url: formData.domain_url!.trim(),
+                        status: formData.status || 'ENABLED'
                     };
                     await domainService.create(createData);
                     showNotificationModal('', 'success', modalMode);
                     await fetchDomains();
                     setIsModalOpen(false);
-                    setFormData({ name: '', address: '', status: 'active' });
+                    setFormData({ name: '', domain_url: '', status: 'ENABLED' });
                     setErrors({});
                 } catch (err) {
                     const errorMessage = err instanceof Error ? err.message : 'Failed to create domain';
@@ -285,14 +285,14 @@ const DomainsTable = () => {
                 const updateData = {
                     id: formData.id,
                     name: formData.name?.trim(),
-                    address: formData.address?.trim(),
+                    domain_url: formData.domain_url?.trim(),
                     status: formData.status
                 };
                 await domainService.update(updateData);
                 showNotificationModal('', 'success', modalMode);
                 await fetchDomains();
                 setIsModalOpen(false);
-                setFormData({ name: '', address: '', status: 'active' });
+                setFormData({ name: '', domain_url: '', status: 'ENABLED' });
                 setErrors({});
             }
         } catch (err) {
@@ -324,8 +324,8 @@ const DomainsTable = () => {
             headerClass: 'ag-header-cell-with-separator'
         },
         { 
-            field: 'address', 
-            headerName: 'Domain Address', 
+            field: 'domain_url', 
+            headerName: 'Domain URL', 
             sortable: true, 
             filter: false,
             flex: 1.5,
@@ -345,10 +345,10 @@ const DomainsTable = () => {
                     <div className="flex items-center gap-2">
                         <div 
                             className={`w-2 h-2 rounded-full ${
-                            params.value === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                            params.value === 'ENABLED' ? 'bg-green-500' : 'bg-gray-400'
                         }`}
                     />
-                    <span>{params.value === 'active' ? 'Active' : 'Inactive'}</span>
+                    <span>{params.value === 'ENABLED' ? 'Enabled' : 'Disabled'}</span>
                 </div>
             )
           }
@@ -467,8 +467,8 @@ const DomainsTable = () => {
                     onClick={() => {
                         setFormData({
                             name: '',
-                            address: '',
-                            status: 'active'
+                            domain_url: '',
+                            status: 'ENABLED'
                         });
                         setIsModalOpen(true);
                     }}
@@ -560,17 +560,17 @@ const DomainsTable = () => {
                         />
                         <Input
                             type="text"
-                            label="Domain Address"
+                            label="Domain URL"
                             placeholder="example.com"
-                            value={formData.address || ''}
-                            onChange={(e) => handleInputChange('address', e.target.value)}
+                            value={formData.domain_url || ''}
+                            onChange={(e) => handleInputChange('domain_url', e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     e.preventDefault();
                                     handleSubmit();
                                 }
                             }}
-                            className={errors.address ? 'border-red-500' : ''}
+                            className={errors.domain_url ? 'border-red-500' : ''}
                         />
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium text-black">Status</label>
@@ -579,27 +579,27 @@ const DomainsTable = () => {
                                     className="flex items-center p-2 border rounded-md bg-white min-h-[42px] cursor-pointer"
                                     onClick={() => setShowStatusDropdown(!showStatusDropdown)}
                                 >
-                                    <span className="text-black ml-2">{formData.status === 'active' ? 'Active' : 'Inactive'}</span>
+                                    <span className="text-black ml-2">{formData.status === 'ENABLED' ? 'Enabled' : 'Disabled'}</span>
                                 </div>
                                 {showStatusDropdown && (
                                     <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
                                         <div
                                             className="px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-black"
                                             onClick={() => {
-                                                handleInputChange('status', 'active');
+                                                handleInputChange('status', 'ENABLED');
                                                 setShowStatusDropdown(false);
                                             }}
                                         >
-                                            Active
+                                            Enabled
                                         </div>
                                         <div
                                             className="px-4 py-2 text-left hover:bg-gray-100 cursor-pointer text-black"
                                             onClick={() => {
-                                                handleInputChange('status', 'inactive');
+                                                handleInputChange('status', 'DISABLED');
                                                 setShowStatusDropdown(false);
                                             }}
                                         >
-                                            Inactive
+                                            Disabled
                                         </div>
                                     </div>
                                 )}
