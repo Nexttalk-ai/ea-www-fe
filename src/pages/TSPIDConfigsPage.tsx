@@ -133,7 +133,7 @@ const TSPIDConfigsPage = () => {
             setIsLoading(true);
             setError(null);
             const [tspidData, orgData] = await Promise.all([
-                tspidService.list(),
+                tspidService.list(100, 0),
                 organizationService.list()
             ]);
             setRowData(tspidData);

@@ -29,10 +29,7 @@ class TSPIDService {
         const response = await fetch(`${API_BASE_URL}/create`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'create',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -44,10 +41,7 @@ class TSPIDService {
         const response = await fetch(`${API_BASE_URL}/update`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'update',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -55,16 +49,11 @@ class TSPIDService {
         return response.json();
     }
 
-    async delete(id: string): Promise<{ status: string; id: string }> {
+    async delete(id: string): Promise<{ message: string }> {
         const response = await fetch(`${API_BASE_URL}/delete`, {
             method: 'DELETE',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'delete',
-                data: {
-                    id: id
-                }
-            }),
+            body: JSON.stringify({ id }),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -74,12 +63,8 @@ class TSPIDService {
 
     async get(id: string): Promise<TSPID> {
         const response = await fetch(`${API_BASE_URL}/get?id=${encodeURIComponent(id)}`, {
-            method: 'POST',
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'get',
-                data: { id }
-            })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -87,13 +72,15 @@ class TSPIDService {
         return response.json();
     }
 
-    async list(): Promise<TSPID[]> {
-        const response = await fetch(`${API_BASE_URL}/list`, {
-            method: 'POST',
+    async list(limit: number = 100, offset: number = 0): Promise<TSPID[]> {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString()
+        });
+        
+        const response = await fetch(`${API_BASE_URL}/list?${params}`, {
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'list'
-            })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
