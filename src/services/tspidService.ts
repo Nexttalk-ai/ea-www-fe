@@ -38,7 +38,7 @@ class TSPIDService {
     }
 
     async update(data: UpdateTSPIDData): Promise<TSPID> {
-        const response = await fetch(`${API_BASE_URL}/update`, {
+        const response = await fetch(`${API_BASE_URL}/update/${encodeURIComponent(data.id)}`, {
             method: 'PUT',
             headers: this.getHeaders(),
             body: JSON.stringify(data),
@@ -50,10 +50,9 @@ class TSPIDService {
     }
 
     async delete(id: string): Promise<{ message: string }> {
-        const response = await fetch(`${API_BASE_URL}/delete`, {
+        const response = await fetch(`${API_BASE_URL}/delete/${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: this.getHeaders(),
-            body: JSON.stringify({ id }),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -62,7 +61,7 @@ class TSPIDService {
     }
 
     async get(id: string): Promise<TSPID> {
-        const response = await fetch(`${API_BASE_URL}/get?id=${encodeURIComponent(id)}`, {
+        const response = await fetch(`${API_BASE_URL}/get/${encodeURIComponent(id)}`, {
             method: 'GET',
             headers: this.getHeaders(),
         });
