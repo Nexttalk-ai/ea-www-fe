@@ -1,5 +1,5 @@
 export const API_CONFIG = {
-    BASE_URL: 'https://0b92iy3w84.execute-api.us-west-2.amazonaws.com/dev'
+    BASE_URL: 'https://6h25g2ltjj.execute-api.us-west-2.amazonaws.com/dev'
 } as const;
 
 export const getApiUrl = (endpoint: string): string => {
