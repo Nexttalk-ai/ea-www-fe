@@ -3,14 +3,13 @@ import { fetcher } from '../utils/helpers/fetcher';
 
 import { getApiUrl } from '../config/api';
 
-const API_BASE_URL = getApiUrl('');
+const API_BASE_URL = getApiUrl('/user');
 
 export const useUser = (userId: string) => {
   const { data, error, isLoading } = useSWR(
     userId ? `user-${userId}` : null,
-    () => fetcher(`${API_BASE_URL}/user/get?id=${encodeURIComponent(userId)}`, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'get', data: { id: userId } })
+    () => fetcher(`${API_BASE_URL}/get/${encodeURIComponent(userId)}`, {
+      method: 'GET'
     }),
     { revalidateOnFocus: false }
   );
