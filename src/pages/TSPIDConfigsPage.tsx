@@ -21,6 +21,7 @@ import HomeLayout from '../layouts/HomeLayout';
 import { Modal } from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
+import { generateTSPID, validateTSPID } from '../utils/helpers/tspidGenerator';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -87,6 +88,12 @@ const TSPIDConfigsPage = () => {
         
         return Math.max(1, calculatedRows);
     };
+
+    useEffect(() => {
+        if (isModalOpen && modalMode === 'add' && !formData.id) {
+            handleRegenerateTSPID();
+        }
+    }, [isModalOpen, modalMode]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -176,10 +183,22 @@ const TSPIDConfigsPage = () => {
         }));
     };
 
+    const handleRegenerateTSPID = () => {
+        const newTSPID = generateTSPID();
+        setFormData(prev => ({ ...prev, id: newTSPID }));
+        if (errors.id) {
+            setErrors(prev => ({ ...prev, id: false }));
+        }
+    };
+
     const validateForm = () => {
         const newErrors: TSPIDValidationError = {};
         
-        if (!formData.id?.trim()) newErrors.id = true;
+        if (!formData.id?.trim()) {
+            newErrors.id = true;
+        } else if (modalMode === 'add' && !validateTSPID(formData.id.trim())) {
+            newErrors.id = true;
+        }
         if (!formData.organization_id?.trim()) newErrors.organization_id = true;
         if (formData.revshare_coefficient !== null && formData.revshare_coefficient !== undefined && formData.revshare_coefficient < 0) newErrors.revshare_coefficient = true;
         
@@ -450,7 +469,7 @@ const TSPIDConfigsPage = () => {
                     <Button
                         onClick={() => {
                             setFormData({
-                                id: '',
+                                id: generateTSPID(),
                                 organization_id: '',
                                 revshare_coefficient: null,
                                 status: 'ENABLED'
@@ -529,20 +548,39 @@ const TSPIDConfigsPage = () => {
 
                     <Modal.Body className="border-none">
                         <div className="flex flex-col gap-4">
-                            <Input
-                                type="text"
-                                label="TSPID"
-                                placeholder="Enter TSPID"
-                                value={formData.id || ''}
-                                onChange={(e) => handleInputChange('id', e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleSubmit();
-                                    }
-                                }}
-                                className={errors.id ? 'border-red-500' : ''}
-                            />
+                            <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-black">TSPID</label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="text"
+                                        placeholder="Auto-generated TSPID"
+                                        value={formData.id || ''}
+                                        onChange={(e) => handleInputChange('id', e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSubmit();
+                                            }
+                                        }}
+                                        className={`flex-1 ${errors.id ? 'border-red-500' : ''}`}
+                                        readOnly={modalMode === 'add'}
+                                    />
+                                    <Button
+                                        onClick={handleRegenerateTSPID}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded flex items-center gap-1"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Regenerate
+                                    </Button>
+                                </div>
+                                {modalMode === 'add' && (
+                                    <p className="text-xs text-gray-500">
+                                        TSPID is automatically generated. Click "Regenerate" to create a new one.
+                                    </p>
+                                )}
+                            </div>
                             <Select
                                 id="organization"
                                 label="Organization"
