@@ -38,10 +38,7 @@ class UserService {
         const response = await fetch(`${API_BASE_URL}/create`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'create',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -50,13 +47,10 @@ class UserService {
     }
 
     async update(data: UpdateUserData): Promise<User> {
-        const response = await fetch(`${API_BASE_URL}/update`, {
+        const response = await fetch(`${API_BASE_URL}/update/${encodeURIComponent(data.id)}`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'update',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -64,16 +58,10 @@ class UserService {
         return response.json();
     }
 
-    async delete(id: string): Promise<{ status: string; id: string }> {
-        const response = await fetch(`${API_BASE_URL}/delete`, {
+    async delete(id: string): Promise<{ message: string }> {
+        const response = await fetch(`${API_BASE_URL}/delete/${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'delete',
-                data: {
-                    id: id
-                }
-            }),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -82,13 +70,9 @@ class UserService {
     }
 
     async get(id: string): Promise<User> {
-        const response = await fetch(`${API_BASE_URL}/get?id=${encodeURIComponent(id)}`, {
-            method: 'POST',
+        const response = await fetch(`${API_BASE_URL}/get/${encodeURIComponent(id)}`, {
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'get',
-                data: { id }
-            })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -96,13 +80,15 @@ class UserService {
         return response.json();
     }
 
-    async list(): Promise<User[]> {
-        const response = await fetch(`${API_BASE_URL}/list`, {
-            method: 'POST',
+    async list(limit: number = 100, offset: number = 0): Promise<User[]> {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString()
+        });
+        
+        const response = await fetch(`${API_BASE_URL}/list?${params}`, {
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'list'
-            })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

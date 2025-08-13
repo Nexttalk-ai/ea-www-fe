@@ -38,10 +38,7 @@ class OrganizationService {
         const response = await fetch(`${API_BASE_URL}/create`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'create',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -50,13 +47,10 @@ class OrganizationService {
     }
 
     async update(data: UpdateOrganizationData): Promise<Organization> {
-        const response = await fetch(`${API_BASE_URL}/update`, {
+        const response = await fetch(`${API_BASE_URL}/update/${encodeURIComponent(data.id)}`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'update',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -64,16 +58,10 @@ class OrganizationService {
         return response.json();
     }
 
-    async delete(id: string): Promise<{ status: string; id: string }> {
-        const response = await fetch(`${API_BASE_URL}/delete`, {
+    async delete(id: string): Promise<{ message: string }> {
+        const response = await fetch(`${API_BASE_URL}/delete/${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'delete',
-                data: {
-                    id: id
-                }
-            }),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -83,13 +71,9 @@ class OrganizationService {
 
     async get(id: string): Promise<Organization> {
         // First, get the organization details
-        const orgResponse = await fetch(`${API_BASE_URL}/get`, {
-            method: 'POST',
+        const orgResponse = await fetch(`${API_BASE_URL}/get/${encodeURIComponent(id)}`, {
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'get',
-                data: { id }
-            })
         });
         if (!orgResponse.ok) {
             throw new Error(`HTTP error! status: ${orgResponse.status}`);
@@ -98,11 +82,8 @@ class OrganizationService {
 
         // Then, get all users to find which ones belong to this organization
         const usersResponse = await fetch(getApiUrl('/user/list'), {
-            method: 'POST',
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'list'
-            })
         });
         if (!usersResponse.ok) {
             throw new Error(`HTTP error! status: ${usersResponse.status}`);
@@ -123,13 +104,15 @@ class OrganizationService {
         };
     }
 
-    async list(): Promise<Organization[]> {
-        const response = await fetch(`${API_BASE_URL}/list`, {
-            method: 'POST',
+    async list(limit: number = 100, offset: number = 0): Promise<Organization[]> {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString()
+        });
+        
+        const response = await fetch(`${API_BASE_URL}/list?${params}`, {
+            method: 'GET',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'list'
-            })
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

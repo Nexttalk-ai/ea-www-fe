@@ -35,8 +35,6 @@ class RulesService {
             throw new Error('Authentication token not found. Please log in again.');
         }
         
-
-        
         return {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -47,10 +45,7 @@ class RulesService {
         const response = await fetch(`${API_BASE_URL}/create`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'create',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -59,13 +54,10 @@ class RulesService {
     }
 
     async update(data: UpdateRuleData): Promise<Rule> {
-        const response = await fetch(`${API_BASE_URL}/update`, {
+        const response = await fetch(`${API_BASE_URL}/update/${encodeURIComponent(data.id)}`, {
             method: 'PUT',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'update',
-                data: data
-            }),
+            body: JSON.stringify(data),
         });
         if (!response.ok) {
             let errorMessage = `HTTP error! status: ${response.status}`;
@@ -91,14 +83,10 @@ class RulesService {
         return result;
     }
 
-    async delete(id: string): Promise<{ status: string; id: string }> {
-        const response = await fetch(`${API_BASE_URL}/delete`, {
+    async delete(id: string): Promise<{ message: string }> {
+        const response = await fetch(`${API_BASE_URL}/delete/${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: this.getHeaders(),
-            body: JSON.stringify({
-                action: 'delete',
-                data: { id }
-            }),
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -121,25 +109,26 @@ class RulesService {
             }
         }
         
-        const headers = this.getHeaders();
+        let response;
         
         // If we found the rule in cache, include the s3_key to work around backend bug
-        const requestBody = cachedRule ? {
-            action: 'get',
-            data: { 
-                id,
-                s3_key: cachedRule.s3_key  // Add s3_key to work around backend bug
-            }
-        } : {
-            action: 'get',
-            data: { id }
-        };
-        
-        const response = await fetch(`${API_BASE_URL}/get`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(requestBody),
-        });
+        if (cachedRule) {
+            // Use POST with s3_key in body to work around backend bug
+            response = await fetch(`${API_BASE_URL}/get`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    id,
+                    s3_key: cachedRule.s3_key
+                }),
+            });
+        } else {
+            // Use standard GET request
+            response = await fetch(`${API_BASE_URL}/get/${encodeURIComponent(id)}`, {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
+        }
         
         if (!response.ok) {
             let errorMessage = `HTTP error! status: ${response.status}`;
@@ -173,17 +162,15 @@ class RulesService {
         return result;
     }
 
-    async list(): Promise<Rule[]> {
-        const headers = this.getHeaders();
+    async list(limit: number = 100, offset: number = 0): Promise<Rule[]> {
+        const params = new URLSearchParams({
+            limit: limit.toString(),
+            offset: offset.toString()
+        });
         
-        const requestBody = {
-            action: 'list'
-        };
-        
-        const response = await fetch(`${API_BASE_URL}/list`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(requestBody),
+        const response = await fetch(`${API_BASE_URL}/list?${params}`, {
+            method: 'GET',
+            headers: this.getHeaders(),
         });
         
         if (!response.ok) {
