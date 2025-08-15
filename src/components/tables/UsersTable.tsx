@@ -411,7 +411,7 @@ const UsersTable = () => {
             }
 
             const result = await userService.delete(userToDelete.id);
-            if (result && (result.status === 'success' || result.id === userToDelete.id)) {
+            if (result && result.message) {
                 await handleSuccessfulDelete();
             } else {
                 throw new Error('Unexpected response from server');
